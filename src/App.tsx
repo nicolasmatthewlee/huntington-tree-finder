@@ -9,7 +9,7 @@ import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
 import LayerSearchSource from "@arcgis/core/widgets/Search/LayerSearchSource.js";
 import Query from "@arcgis/core/rest/support/Query.js";
 
-import HUNTINGON_ICON from "assets/icon_rgb.jpg";
+import HUNTINGON_LOGO from "assets/logo_hz.png";
 
 const App = () => {
   const mapViewRef = useRef<null | MapView>(null);
@@ -167,12 +167,13 @@ const App = () => {
   return (
     <div className="w-[100vw] h-[100vh] flex flex-col">
       {/* header */}
-      <div className="h-[50px] flex items-center shadow">
-        <img src={HUNTINGON_ICON} alt="The Huntington" className="h-[100%]" />
-        <div>The Huntington Tree Map</div>
+      <div className="flex items-center shadow p-[18px] space-x-[10px] text-[20px] z-10">
+        <img src={HUNTINGON_LOGO} alt="The Huntington" className="h-[48px]" />
+        <div>|</div>
+        <div>Tree Map</div>
       </div>
       {/* map */}
-      <div id="mapDiv" className="flex-1 focus:outline-none" />
+      <div id="mapDiv" className="flex-1 focus:outline-none bg-graph-paper" />
     </div>
   );
 };
