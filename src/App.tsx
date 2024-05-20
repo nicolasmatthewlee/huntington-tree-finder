@@ -11,7 +11,6 @@ import Query from "@arcgis/core/rest/support/Query.js";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
 import Graphic from "@arcgis/core/Graphic.js";
 import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol.js";
-
 import HUNTINGON_LOGO from "assets/logo_hz.png";
 
 const App = () => {
