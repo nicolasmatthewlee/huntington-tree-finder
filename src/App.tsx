@@ -216,7 +216,7 @@ const App = () => {
       <div className="flex items-center shadow p-[18px] space-x-[10px] text-[20px] z-10">
         <img src={HUNTINGON_LOGO} alt="The Huntington" className="h-[48px]" />
         <div>|</div>
-        <div>Tree Map</div>
+        <div>Tree Finder</div>
       </div>
       {/* map */}
       <div id="mapDiv" className="flex-1 focus:outline-none bg-graph-paper" />
