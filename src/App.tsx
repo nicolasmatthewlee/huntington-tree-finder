@@ -79,11 +79,15 @@ const App = () => {
     const filterCriteria =
       "PublicView = 'Yes' AND PlantCondition <> 'Dead' AND PlantCondition <> 'Removed' AND PlantCondition <> 'Unable to Locate' AND PlantCondition <> 'Indistinguishable' AND PlantCondition <> 'Questionable' AND PlantHabit = 'Tree'";
 
-    const getUniqueSuggestions = async (layer: FeatureLayer, query: any) => {
+    const getUniqueSuggestions = async (
+      layer: FeatureLayer,
+      query: any,
+      fieldName: string
+    ) => {
       // 1. create query
       const escapedSuggestTerm = query.suggestTerm.replace(/'/g, "''");
       const q = new Query({
-        where: `${filterCriteria} AND ScientificName LIKE '%${escapedSuggestTerm}%'`,
+        where: `${filterCriteria} AND ${fieldName} LIKE '%${escapedSuggestTerm}%'`,
         outFields: ["*"], // fields to return
         returnGeometry: false,
       });
@@ -93,7 +97,7 @@ const App = () => {
       const uniqueNames = new Set<string>();
       const suggestions = [];
       for (const feature of features) {
-        const name = feature.attributes["ScientificName"];
+        const name = feature.attributes[fieldName];
         if (!uniqueNames.has(name)) {
           uniqueNames.add(name);
           suggestions.push({
@@ -108,7 +112,8 @@ const App = () => {
 
     const getResults = async (
       layer: FeatureLayer,
-      query: any
+      query: any,
+      fieldName: string
     ): Promise<__esri.SearchResult[]> => {
       // 0. clear graphics layer
       graphicsLayer.removeAll();
@@ -116,7 +121,7 @@ const App = () => {
       const escapedSuggestTerm = query.suggestResult.text.replace(/'/g, "''");
       const q = new Query({
         returnGeometry: true,
-        where: `${filterCriteria} AND ${"ScientificName"} = '${escapedSuggestTerm}'`,
+        where: `${filterCriteria} AND ${fieldName} = '${escapedSuggestTerm}'`,
         outFields: query.outFields,
       });
       // 2. execute query
@@ -124,7 +129,7 @@ const App = () => {
       // 3. assemble results
       const results = features.map((feature) => ({
         feature: feature,
-        name: feature.attributes["ScientificName"],
+        name: feature.attributes[fieldName],
         extent: feature.geometry.extent,
         target: feature,
       }));
@@ -148,29 +153,39 @@ const App = () => {
       return results;
     };
 
+    const createSearchSource = (
+      layer: FeatureLayer,
+      fieldName: string,
+      name: string
+    ) => {
+      return new LayerSearchSource({
+        layer: layer,
+        searchFields: [fieldName],
+        displayField: fieldName,
+        exactMatch: false,
+        outFields: ["*"],
+        name: name,
+        placeholder: `Search by ${name}`,
+        suggestionsEnabled: true,
+        getSuggestions: async (params) => {
+          return await getUniqueSuggestions(layer, params, fieldName);
+        },
+        getResults: async (params) => {
+          return await getResults(layer, params, fieldName);
+        },
+      });
+    };
+
     const setupSearchWidget = async (layer: FeatureLayer) => {
       const searchWidget = new Search({
         view: mapView,
         locationEnabled: false,
         includeDefaultSources: false,
+        allPlaceholder: "Search Trees",
         sources: [
-          new LayerSearchSource({
-            layer: layer,
-            searchFields: ["ScientificName"],
-            displayField: "ScientificName",
-            exactMatch: false,
-            outFields: ["*"],
-            name: "Trees",
-            placeholder: "Search Trees",
-            suggestionsEnabled: true,
-            getSuggestions: async (params) => {
-              return await getUniqueSuggestions(layer, params);
-            },
-            getResults: async (params: any): Promise<__esri.SearchResult[]> => {
-              return await getResults(layer, params);
-            },
-            maxSuggestions: 6,
-          }),
+          createSearchSource(layer, "ScientificName", "Scientific Name"),
+          createSearchSource(layer, "PrimaryCommonName", "Common Name"),
+          createSearchSource(layer, "Genus", "Genus"),
         ],
       });
 
