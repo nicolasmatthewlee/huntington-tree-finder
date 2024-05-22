@@ -1,5 +1,6 @@
 {
   "name": "huntington-tree-finder",
+  "homepage": "/huntington-tree-finder",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
