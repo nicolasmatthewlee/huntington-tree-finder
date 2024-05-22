@@ -21,6 +21,21 @@ npm i
 npm start
 ```
 
+## deployment onto Microsoft Server Manager
+
+1. create `build`
+
+```shell
+npm run build
+```
+
+2. copy `build` folder into virtual machine and extract all files (if needed)
+3. move the contents of the build folder into `huntington-tree-finder/` in the following directory: `C:\inetpub\wwwroot`
+4. run Microsoft Server Manager as administrator (`server manager > right click > more > run as administrator`)
+5. open IIS (`tools > Internet Information Services (IIS) Manager`)
+6. navigate to `Sites/Default Web Site` and the copied folder should appear within this site
+7. navigate to the build folder in file explorer, and modify security properties by adding access for `IIS AppPool\DefaultAppPool` and adding access for `IUSR`
+
 ## file structure
 
 ### `README.md`
