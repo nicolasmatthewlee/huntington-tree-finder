@@ -8,33 +8,48 @@
 git clone git@github.com:nicolasmatthewlee/huntington-tree-finder.git
 ```
 
-2. navigate into repository and install packages
+2. build docker image
 
 ```shell
-cd huntington-tree-finder
+# in huntington-tree-finder/
+docker build -t huntington-tree-finder .
+```
+
+3. start docker container
+
+```shell
+# in huntington-tree-finder/
+docker run -v .:/home/client --publish 3000:3000 -it huntington-tree-finder sh
+```
+
+4. (in container) navigate into repository and install packages
+
+```shell
+# in /home/client/
 npm i
 ```
 
-3. run the client
+5. (optional) (in container) run the client
 
 ```shell
+# in /home/client/
 npm start
 ```
 
-## deployment onto Microsoft Server Manager
-
-1. create `build`
+6. (in container) build the client
 
 ```shell
+# in /home/client/
 npm run build
 ```
 
-2. copy `build` folder into virtual machine and extract all files (if needed)
-3. move the contents of the build folder into `huntington-tree-finder/` in the following directory: `C:\inetpub\wwwroot`
-4. run Microsoft Server Manager as administrator (`server manager > right click > more > run as administrator`)
-5. open IIS (`tools > Internet Information Services (IIS) Manager`)
-6. navigate to `Sites/Default Web Site` and the copied folder should appear within this site
-7. navigate to the build folder in file explorer, and modify security properties by adding access for `IIS AppPool\DefaultAppPool` and adding access for `IUSR`
+## deployment with Microsoft Server Manager
+
+1. move the contents of the build folder into `huntington-tree-finder/` in the following directory: `C:\inetpub\wwwroot`
+2. run Microsoft Server Manager as administrator (`server manager > right click > more > run as administrator`)
+3. open IIS (`tools > Internet Information Services (IIS) Manager`)
+4. navigate to `Sites/Default Web Site` and the copied folder should appear within this site
+5. navigate to the build folder in file explorer, and modify security properties by adding access for `IIS AppPool\DefaultAppPool` and adding access for `IUSR`
 
 ## file structure
 
