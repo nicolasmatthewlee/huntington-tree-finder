@@ -77,7 +77,7 @@ const App = () => {
 
     // 6. add search widget
     const filterCriteria =
-      "PublicView = 'Yes' AND PlantCondition <> 'Dead' AND PlantCondition <> 'Removed' AND PlantCondition <> 'Unable to Locate' AND PlantCondition <> 'Indistinguishable' AND PlantCondition <> 'Questionable' AND PlantHabit = 'Tree'";
+      "PublicView = 'Yes' AND PlantCondition <> 'Dead' AND PlantCondition <> 'Removed' AND PlantCondition <> 'Unable to Locate' AND PlantCondition <> 'Indistinguishable' AND PlantCondition <> 'Questionable' AND PlantHabit = 'Tree' AND AccessionNumber in ('30470','224','397','1542','2544','2943','13535','2005','23688','1764','3357')";
 
     const getUniqueSuggestions = async (
       layer: FeatureLayer,

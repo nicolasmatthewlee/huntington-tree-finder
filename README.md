@@ -51,6 +51,21 @@ npm run build
 4. navigate to `Sites/Default Web Site` and the copied folder should appear within this site
 5. navigate to the build folder in file explorer, and modify security properties by adding access for `IIS AppPool\DefaultAppPool` and adding access for `IUSR`
 
+## updating tree list
+
+1. open [ArcGIS Online Assistant](https://ago-assistant.esri.com/)
+2. select "I want to..." > "View an Item's JSON" and then select the tree-finder web app
+3. update `definitionExpression` with the appropriate accession numbers
+
+```json
+"definitionExpression": "PlantCondition <> 'Dead' AND PlantCondition <> 'Removed' AND PlantCondition <> 'Unable to Locate' AND PlantCondition <> 'Indistinguishable' AND PlantCondition <> 'Questionable' AND PublicView = 'Yes' AND PlantHabit = 'Tree' AND AccessionNumber in ('30470','224','397','1542','2544','2943','13535','2005','23688','1764','3357')",
+```
+
+_example `definitionExpression`_
+
+4. open the client, and copy the `definitionExpression` string into `filterCriteria`
+5. rebuild and redeploy
+
 ## file structure
 
 ### `README.md`
