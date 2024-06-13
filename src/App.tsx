@@ -4,9 +4,7 @@ import WebMap from "@arcgis/core/WebMap.js";
 import MapView from "@arcgis/core/views/MapView.js";
 import Print from "@arcgis/core/widgets/Print.js";
 import Locate from "@arcgis/core/widgets/Locate.js";
-import Search from "@arcgis/core/widgets/Search.js";
 import FeatureLayer from "@arcgis/core/layers/FeatureLayer.js";
-import LayerSearchSource from "@arcgis/core/widgets/Search/LayerSearchSource.js";
 import Query from "@arcgis/core/rest/support/Query.js";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer.js";
 import Graphic from "@arcgis/core/Graphic.js";
@@ -32,7 +30,7 @@ const App = () => {
       map: webMap,
       container: "mapDiv",
     });
-    mapView.zoom = 5;
+    mapView.zoom = 3;
     mapViewRef.current = mapView;
 
     // 3. add print widget
@@ -71,128 +69,27 @@ const App = () => {
     });
     mapView.ui.add(locateWidget, "top-left");
 
-    // 5. add graphics layer for highlighting points from search
+    // 5. add graphics layer for highlighting points from selection
     const graphicsLayer = new GraphicsLayer();
     graphicsLayerRef.current = graphicsLayer;
 
-    // 6. add search widget
+    // 6. add list
     const filterCriteria =
       "PublicView = 'Yes' AND PlantCondition <> 'Dead' AND PlantCondition <> 'Removed' AND PlantCondition <> 'Unable to Locate' AND PlantCondition <> 'Indistinguishable' AND PlantCondition <> 'Questionable' AND PlantHabit = 'Tree' AND AccessionNumber in ('30470','224','397','1542','2544','2943','13535','2005','23688','1764','3357')";
 
-    const getUniqueSuggestions = async (
-      layer: FeatureLayer,
-      query: any,
-      fieldName: string
-    ) => {
-      // 1. create query
-      const escapedSuggestTerm = query.suggestTerm.replace(/'/g, "''");
-      const q = new Query({
-        where: `${filterCriteria} AND ${fieldName} LIKE '%${escapedSuggestTerm}%'`,
-        outFields: ["*"], // fields to return
-        returnGeometry: false,
-      });
-      // 2. execute query
-      const { features } = await layer.queryFeatures(q);
-      // 3. assemble set of results
-      const uniqueNames = new Set<string>();
-      const suggestions = [];
-      for (const feature of features) {
-        const name = feature.attributes[fieldName];
-        if (!uniqueNames.has(name)) {
-          uniqueNames.add(name);
-          suggestions.push({
-            key: name,
-            text: name,
-            sourceIndex: query.sourceIndex,
-          });
-        }
-      }
-      return suggestions;
-    };
-
-    const getResults = async (
-      layer: FeatureLayer,
-      query: any,
-      fieldName: string
-    ): Promise<__esri.SearchResult[]> => {
-      // 0. clear graphics layer
-      graphicsLayer.removeAll();
-      // 1. create query
-      const escapedSuggestTerm = query.suggestResult.text.replace(/'/g, "''");
-      const q = new Query({
-        returnGeometry: true,
-        where: `${filterCriteria} AND ${fieldName} = '${escapedSuggestTerm}'`,
-        outFields: query.outFields,
-      });
-      // 2. execute query
-      const { features } = await layer.queryFeatures(q);
-      // 3. assemble results
-      const results = features.map((feature) => ({
-        feature: feature,
-        name: feature.attributes[fieldName],
-        extent: feature.geometry.extent,
-        target: feature,
-      }));
-      // 4. add graphics to the graphics layer
-      features.forEach((feature) => {
-        const graphic = new Graphic({
-          geometry: feature.geometry,
-          symbol: new SimpleMarkerSymbol({
-            color: [255, 0, 0, 1], // Red color
-            size: 8,
-            outline: {
-              color: [255, 255, 255], // White outline
-              width: 1,
-            },
-          }),
-          attributes: feature.attributes,
-        });
-        graphicsLayer.add(graphic);
+    const fetchScientificNames = async (layer: FeatureLayer) => {
+      const query = new Query({
+        where: `${filterCriteria} AND 1=1`,
+        outFields: ["ScientificName"],
+        returnDistinctValues: true,
+        orderByFields: ["ScientificName"],
       });
 
-      return results;
-    };
-
-    const createSearchSource = (
-      layer: FeatureLayer,
-      fieldName: string,
-      name: string
-    ) => {
-      return new LayerSearchSource({
-        layer: layer,
-        searchFields: [fieldName],
-        displayField: fieldName,
-        exactMatch: false,
-        outFields: ["*"],
-        name: name,
-        placeholder: `Search by ${name}`,
-        suggestionsEnabled: true,
-        getSuggestions: async (params) => {
-          return await getUniqueSuggestions(layer, params, fieldName);
-        },
-        getResults: async (params) => {
-          return await getResults(layer, params, fieldName);
-        },
-      });
-    };
-
-    const setupSearchWidget = async (layer: FeatureLayer) => {
-      const searchWidget = new Search({
-        view: mapView,
-        locationEnabled: false,
-        includeDefaultSources: false,
-        allPlaceholder: "Search Trees",
-        sources: [
-          createSearchSource(layer, "ScientificName", "Scientific Name"),
-          createSearchSource(layer, "PrimaryCommonName", "Common Name"),
-          createSearchSource(layer, "Genus", "Genus"),
-        ],
-      });
-
-      mapView.ui.add(searchWidget, {
-        position: "top-right",
-        index: 0,
-      });
+      const { features } = await layer.queryFeatures(query);
+      const names = features.map(
+        (feature) => feature.attributes.ScientificName
+      );
+      return names;
     };
 
     // after map has loaded
@@ -203,7 +100,64 @@ const App = () => {
       ) as FeatureLayer;
 
       if (featureLayer) {
-        setupSearchWidget(featureLayer);
+        // add the list container to the map view's UI
+        const listContainer = document.createElement("div");
+        listContainer.className = "flex flex-col bg-white";
+        const listContainerLabel = document.createElement("div");
+        listContainerLabel.textContent = "Tree List";
+        listContainerLabel.className =
+          "text-center font-medium px-[10px] py-[5px] shadow";
+        listContainer.appendChild(listContainerLabel);
+
+        // add plants to the list container
+        fetchScientificNames(featureLayer)
+          .then((names) => {
+            names.forEach((e) => {
+              const item = document.createElement("button");
+              item.className = "shadow-sm px-[10px] py-[5px] hover:bg-gray-100";
+              item.textContent = String(e);
+              item.onclick = async () => {
+                // 0. clear graphics layer
+                graphicsLayer.removeAll();
+                // 1. create query
+                const q = new Query({
+                  returnGeometry: true,
+                  where: `${filterCriteria} AND ${"ScientificName"} = '${e}'`,
+                });
+                // 2. execute query
+                const { features } = await featureLayer.queryFeatures(q);
+                // 3. add graphics to the graphics layer
+                features.forEach((feature) => {
+                  const graphic = new Graphic({
+                    geometry: feature.geometry,
+                    symbol: new SimpleMarkerSymbol({
+                      color: [255, 0, 0, 1], // Red color
+                      size: 8,
+                      outline: {
+                        color: [255, 255, 255], // White outline
+                        width: 1,
+                      },
+                    }),
+                    attributes: feature.attributes,
+                  });
+                  graphicsLayer.add(graphic);
+                });
+                // 4. go to first point and open popup
+                if (mapViewRef.current) {
+                  mapViewRef.current.goTo({
+                    target: features[0].geometry,
+                  });
+
+                  mapViewRef.current.popup.open({
+                    features: [features[0]],
+                    location: features[0].geometry,
+                  });
+                }
+              };
+              listContainer.appendChild(item);
+            });
+          })
+          .then(() => mapView.ui.add(listContainer, "top-right"));
       }
       // 2. add the graphics layer
       webMap.add(graphicsLayer);
