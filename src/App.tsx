@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 import WebMap from "@arcgis/core/WebMap.js";
 import MapView from "@arcgis/core/views/MapView.js";
@@ -15,6 +15,29 @@ const App = () => {
   const mapViewRef = useRef<null | MapView>(null);
   const graphicsLayerRef = useRef<null | GraphicsLayer>(null); // holds selected points on search
 
+  const previousSelection = useRef<number | null>(null);
+  const [selection, setSelection] = useState<number>(-1);
+
+  // on selection change, set background color of list items
+  useEffect(() => {
+    // 1. set previous selection to white
+    if (previousSelection.current) {
+      const element = document.querySelector(
+        `#item-${previousSelection.current}`
+      );
+      if (element) {
+        element.classList.remove("bg-gray-100");
+        element.classList.add("bg-white");
+      }
+    }
+    previousSelection.current = selection;
+    // 2. set new selection to gray
+    const element = document.querySelector(`#item-${selection}`);
+    if (!element) return;
+    element.classList.remove("bg-white");
+    element.classList.add("bg-gray-100");
+  }, [selection]);
+
   useEffect(() => {
     if (mapViewRef.current) return;
 
@@ -29,6 +52,7 @@ const App = () => {
     const mapView = new MapView({
       map: webMap,
       container: "mapDiv",
+      center: [-118.1142751, 34.1284478],
     });
     mapView.zoom = 3;
     mapViewRef.current = mapView;
@@ -112,9 +136,10 @@ const App = () => {
         // add plants to the list container
         fetchScientificNames(featureLayer)
           .then((names) => {
-            names.forEach((e) => {
+            names.forEach((e, key) => {
               const item = document.createElement("button");
               item.className = "shadow-sm px-[10px] py-[5px] hover:bg-gray-100";
+              item.id = `item-${key}`;
               item.textContent = String(e);
               item.onclick = async () => {
                 // 0. clear graphics layer
@@ -148,11 +173,15 @@ const App = () => {
                     target: features[0].geometry,
                   });
 
-                  mapViewRef.current.popup.open({
-                    features: [features[0]],
+                  mapViewRef.current.openPopup({
+                    // features: [features[0]],
+                    fetchFeatures: true,
                     location: features[0].geometry,
                   });
                 }
+
+                // 5. set selection
+                setSelection(key);
               };
               listContainer.appendChild(item);
             });
