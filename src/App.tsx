@@ -21,20 +21,18 @@ const App = () => {
   // on selection change, set background color of list items
   useEffect(() => {
     // 1. set previous selection to white
-    if (previousSelection.current) {
+    if (previousSelection.current !== null) {
       const element = document.querySelector(
         `#item-${previousSelection.current}`
       );
       if (element) {
         element.classList.remove("bg-gray-100");
-        element.classList.add("bg-white");
       }
     }
     previousSelection.current = selection;
     // 2. set new selection to gray
     const element = document.querySelector(`#item-${selection}`);
     if (!element) return;
-    element.classList.remove("bg-white");
     element.classList.add("bg-gray-100");
   }, [selection]);
 
@@ -130,7 +128,7 @@ const App = () => {
         const listContainerLabel = document.createElement("div");
         listContainerLabel.textContent = "Tree List";
         listContainerLabel.className =
-          "text-center font-medium px-[10px] py-[5px] shadow";
+          "text-center font-medium px-[10px] py-[5px] shadow z-10";
         listContainer.appendChild(listContainerLabel);
 
         // add plants to the list container
